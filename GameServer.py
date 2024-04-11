@@ -4,7 +4,7 @@ import tornado.websocket
 import Model
 import numpy as np
 
-dqn = Model.DQN(10, 2, fileName="")
+dqn = Model.DQN(10, 2, fileName="", batch_size=256, gamma=0.5)
 
 class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def open(self):

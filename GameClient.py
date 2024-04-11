@@ -156,7 +156,7 @@ class Player(GameObject):
             self.preDis = dis
             return 0
         reward = 0
-        reward  = (self.preDis - dis) / 300//2
+        reward  = (self.preDis - dis) / 300/2
 
         self.preDis = dis
         return reward + add
@@ -189,10 +189,15 @@ def Restart():
     global gaming 
     global objectsList
     global pipes
+    global forceUp
+    global maxScore
     random.seed(1000)
+    if(score > maxScore):
+        maxScore = score
     score = 0
     gaming = True
     objectsList.clear()
+    forceUp = False
     pipes.clear()
     Init()
     for i in objectsList:
@@ -206,6 +211,7 @@ x = int(sys.argv[1])
 y = int(sys.argv[2])
 os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (x,y)
 score = 0
+maxScore = 0
 gaming = True
 pygame.init()
 window_size = (800//2, 600//2)
@@ -354,7 +360,7 @@ while True:
             if(i.isInit):
                 i.Update(timeInterval, events)
     Render()
-    text_surface = my_font.render(str(score), False, (0, 0, 0))
+    text_surface = my_font.render(str(score) + " / " + str(maxScore), False, (0, 0, 0))
     window.blit(text_surface, (0,0))
     if(gaming == False):
         text_surface = my_font.render('You Fail', False, (0, 0, 0))
