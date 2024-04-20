@@ -47,8 +47,9 @@ class GameObject:
         pass
 
 class Pipe(GameObject):
-    def __init__(self):
+    def __init__(self, parent):
         super().__init__()
+        self.parent = parent
         pipes.append(self)
         self.localPosition=  Vector2(0, 0)
         pass
@@ -60,12 +61,12 @@ class Pipe(GameObject):
 class PipeSet(GameObject):
     def __init__(self):
         super().__init__()
-        self.speed = 6
+        self.speed = 5.5
     def Start(self):
         self.size = Vector2(0, 0)
         self.color = (255, 255, 0)
-        self.pipe1 = Pipe()
-        self.pipe2 = Pipe()
+        self.pipe1 = Pipe(self)
+        self.pipe2 = Pipe(self)
         self.pipe1.Start()
         self.pipe2.Start()
         self.pipe1.localPosition = Vector2(0, 350)
@@ -80,10 +81,11 @@ class PipeSet(GameObject):
         self.pipe2.position = self.pipe2.localPosition + self.position
     def Update(self, deltaTime, event):
         self.SetPosition(self.position.x-self.speed, self.position.y)
-        if(self.counted == False and self.position.x < 50):
+        if(self.counted == False and self.position.x < 100):
             AddScore()
-            pipes.pop(0)
-            pipes.pop(0)
+            if(len(pipes) > 0):
+                pipes.pop(0)
+                pipes.pop(0)
             self.counted = True
         
 class Player(GameObject):
@@ -96,20 +98,13 @@ class Player(GameObject):
         self.isUp = False
         self.preDis = -1
     def Start(self):
-        self.position = Vector2(100, 100)
+        self.position = Vector2(100, 200)
         self.color = (255, 0, 0)
         self.size = Vector2(50, 50)
         super().Start()
         pass
     def Update(self, deltaTime, event):
         self.isUp = forceUp
-        # for i in event:
-        #     if(i.type == pygame.KEYDOWN):
-        #         if(i.key == pygame.K_SPACE):
-        #             self.isUp = True
-        #     if(i.type == pygame.KEYUP):
-        #         if(i.key == pygame.K_SPACE):
-        #             self.isUp = False
         if(self.position.y < 0):
             self.position.y = 0
         if(self.isUp):
@@ -131,30 +126,33 @@ class Player(GameObject):
             Fail()
         pass
     def CalculateReward(self):
+        global playerPos
+        global lineColor
+        global targetPos
+        add = 0
         x =pipes[0].position.x+pipes[0].size.x/2
         y = (pipes[0].position.y + pipes[1].position.y)/2
-        add = 0
-        if(x+pipes[0].size.x < self.position.x):
-            x = pipes[2].position.x + pipes[2].size.x/2
-            y = (pipes[2].position.y + pipes[3].position.y)/2
-            add = 10
         thisCenter = (self.position.x+self.size.x/2, self.position.y + self.size.y/2)
         y += pipes[0].size.y/2
+        playerPos = (thisCenter[0], thisCenter[1])
         dis = math.sqrt((thisCenter[0] - x)*(thisCenter[0] - x) + (thisCenter[1] - y)*(thisCenter[1] - y))
-        # reward = 400 - dis
-        # if(reward < 0):
-        #     reward = 0
-        # # if(reward > 300):
-        # #     reward = 300
-        # reward /= 400
-        # return reward +add
+        if(targetPos[0] < x):
+            self.preDis = dis
+            add = 10
+        targetPos = (x, y)
         if(self.preDis < 0):
             self.preDis = dis
             return 0
-        reward = 0
-        reward  = (self.preDis - dis) / 300
+        # reward = 0
 
-        self.preDis = dis
+        reward  = (self.preDis - dis)/10
+        if reward < 0:
+            lineColor = (255, 0, 0)
+        else :
+            lineColor = (0, 0, 255)
+        if(self.preDis > dis):
+            self.preDis = dis
+        # self.preDis = dis
         return reward + add
         
         
@@ -185,7 +183,10 @@ def Restart():
     global gaming 
     global objectsList
     global pipes
+    global maxScore
     random.seed(1000)
+    if(maxScore < score):
+        maxScore = score
     score = 0
     gaming = True
     objectsList.clear()
@@ -199,6 +200,7 @@ def Restart():
 
 
 score = 0
+maxScore = 0
 gaming = True
 pygame.init()
 window_size = (800, 600)
@@ -212,10 +214,14 @@ timeInterval = 1 / fps
 pygame.font.init()
 my_font = pygame.font.SysFont('Comic Sans MS', 30)
 player = None
+lineColor = (0, 0, 0)
 def Init():
     global player
     spawn = PipeSpawn()
     player = Player()
+    pipe = PipeSet()
+    pipe.Start()
+    pipe.SetPosition(pipe.position.x- 2*(pipe.speed * spawn.target * fps), pipe.position.y)
     pipe = PipeSet()
     pipe.Start()
     pipe.SetPosition(pipe.position.x- (pipe.speed * spawn.target * fps), pipe.position.y)
@@ -238,6 +244,7 @@ def Render():
     window.fill((255, 200, 255))
     for i in objectsList:
         pygame.draw.rect(window, i.color, (i.position.x, i.position.y, i.size.x, i.size.y))
+    pygame.draw.line(window, lineColor, playerPos, targetPos)
 
 
 def GetDatas():
@@ -248,7 +255,17 @@ def GetDatas():
     pipe2 = pipes[1].position
     pipe3 = pipes[2].position
     pipe4 = pipes[3].position
-    return [playerPos.x, playerPos.y, pipe1.x, pipe1.y, pipe2.x, pipe2.y, pipe3.x, pipe3.y, pipe4.x, pipe4.y]
+    value = 300
+    return [ playerPos.x/value,
+             playerPos.y/value, 
+             pipe1.x/value, 
+             pipe1.y/value, 
+             pipe2.x/value, 
+             pipe2.y/value, 
+             pipe3.x/value, 
+             pipe3.y/value, 
+             pipe4.x/value, 
+             pipe4.y/value]
 
 
 modelEnd = False
@@ -258,12 +275,11 @@ def Model():
     global forceUp
     global modelUpdating
     
-    dqn = M.DQN(10, 2, fileName="")
-    for i in range(1000):
+    dqn = M.DQN(10, 2, fileName="", gamma=0.99, epsilon=1, batch_size=128, train=True, updateFreq=10)
+    for i in range(100000):
         while( len(pipes) < 4):
             time.sleep(0.1)
         state = GetDatas()
-        state = np.reshape(state, [10, 1])
         r = 0
         while(gaming):
             if modelEnd:
@@ -275,20 +291,21 @@ def Model():
                 forceUp = False
             time.sleep(0.1)
             if(not gaming):
-                dqn.Remember(state, ac, -100, nextState, gaming)
+                dqn.Remember(state, ac, -10, nextState, gaming)
                 break
 
             nextState = GetDatas()
-            nextState = np.reshape(nextState, [10, 1])
             reward = 0
             if(gaming == False):
                 reward = -100
             else:
                 reward = player.CalculateReward()
-                # reward *= (score+1)
+                reward *= (score+1)
+                # reward = score
             r += reward
             dqn.Remember(state, ac, reward, nextState, gaming)
             state = nextState
+        dqn.Train()
         WriteReward(i, r, dqn.epsilon)
         Restart()
             
@@ -303,6 +320,8 @@ def WriteReward(num, reward, e):
     file.write(num + ", " + str(reward) + ", " + str(e) + ", " + str(score) +"\n")
     file.close()
 
+playerPos = (0, 0)
+targetPos = (0, 0)
 
 
 thread = threading.Thread(target=Model)
@@ -327,7 +346,9 @@ while True:
             if(i.isInit):
                 i.Update(timeInterval, events)
     Render()
-    text_surface = my_font.render(str(score), False, (0, 0, 0))
+    
+    # pygame.display.flip()
+    text_surface = my_font.render(str(score) + " / " + str(maxScore), False, (0, 0, 0))
     window.blit(text_surface, (0,0))
     if(gaming == False):
         text_surface = my_font.render('You Fail', False, (0, 0, 0))
