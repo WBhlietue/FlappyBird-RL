@@ -9,9 +9,10 @@ pygame.init()
 screen = pygame.display.set_mode((500, 500))
 foodPos = [0, 0]
 dir = "a"
-dqn = M.DQN(11*11+1, 4, fileName="", gamma=0.99, epsilon=1, batch_size=128, train=True, updateFreq=10, saveName="snakeTrain.txt", name="snake", )
+dqn = M.DQN(11*11+1, 4, fileName="snakeTrain.txt", gamma=0.99, epsilon=1, batch_size=128, train=False, updateFreq=10, saveName="snakeTrainNone.txt", name="snake")
 r = 0
 num = 0
+random.seed(12345)
 def GetBoard(hp):
     b = []
     for i in board:
@@ -54,7 +55,6 @@ class Snake:
         self.hp -= 1
         # print(self.hp)
         if(self.x < 0 or self.x > 10 or self.y < 0 or self.y > 10 or board[self.x][self.y] == 1 or self.hp == 0):
-            nextState = GetBoard(self.hp)
             GameOver()
             return
         else:
@@ -85,7 +85,7 @@ def Restart():
     global foodPos
     global inGaming
     global dir
-
+    random.seed(12345)
     dir = "a"
     board = [[0 for x in range(11)] for y in range(11)]
     snake = Snake(5, 5)
@@ -159,4 +159,4 @@ while True:
     if(inGaming):
         Move()
         Render()
-    pygame.time.wait(1)
+    pygame.time.wait(100)
