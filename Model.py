@@ -39,9 +39,12 @@ class DQN:
                  fileName="",
                  train=True,
                  saveFreq=100,
-                 maxLen=10000):
+                 maxLen=10000, 
+                 saveName = "modelSave.txt", 
+                 name = ""):
         self.outputSize = outputSize
         self.inputSize = inputSize
+        self.name = name
         if (len(fileName) == 0):
             self.model = self.CreateModel()
             self.targetModel = self.CreateModel()
@@ -62,12 +65,13 @@ class DQN:
         self.step = 0
         self.saveStep = 0
         self.saveFreq = saveFreq
+        self.saveName  =saveName
         if(train==False):
             self.epsilon = self.epsilonMin
             self.batch_size = -1
 
     def CreateModel(self):
-        model = NN.NeuralNetwork(self.inputSize, "flappy birds")
+        model = NN.NeuralNetwork(self.inputSize, self.name)
         # model.AddLayer(126, "relu")
         model.AddLayer(16, "relu")
         model.AddLayer(self.outputSize, "softmax")
@@ -107,7 +111,7 @@ class DQN:
         print("update")
         weight = self.model.GetLayers()
         self.targetModel.SetLayers(weight)
-        self.targetModel.Save("ModelSave.txt")
+        self.targetModel.Save(self.saveName)
 
     def Remember(self, state, action, reward, next_state, done):
         self.reward.Add(state, action, reward, next_state, done)
