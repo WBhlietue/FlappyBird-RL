@@ -85,6 +85,8 @@ def Restart():
     global foodPos
     global inGaming
     global dir
+    global dqn
+    dqn = M.DQN(11*11+1, 4, fileName="snakeTrain.txt", gamma=0.99, epsilon=1, batch_size=128, train=False, updateFreq=10, saveName="snakeTrainNone.txt", name="snake")
     random.seed(12345)
     dir = "a"
     board = [[0 for x in range(11)] for y in range(11)]

@@ -180,4 +180,3 @@ while True:
     if(inGaming):
         Move()
         Render()
-    # pygame.time.wait(1)
