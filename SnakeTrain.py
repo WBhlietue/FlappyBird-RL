@@ -75,6 +75,7 @@ class Snake:
                 reward = preDis - dis
             board[self.x][self.y] = 3
         nextState = GetBoard(self.hp)
+        reward *= (len(self.parts)+1)
         r += reward
         dqn.Remember(state, a, reward, nextState, done)
 
@@ -179,4 +180,4 @@ while True:
     if(inGaming):
         Move()
         Render()
-    pygame.time.wait(1)
+    # pygame.time.wait(1)
