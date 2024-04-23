@@ -12,6 +12,7 @@ dir = "a"
 dqn = M.DQN(11*11+1, 4, fileName="", gamma=0.99, epsilon=1, batch_size=128, train=True, updateFreq=10, saveName="snakeTrain.txt", name="snake")
 r = 0
 num = 0
+random.seed(12345)
 def GetBoard(hp):
     b = []
     for i in board:
@@ -104,7 +105,7 @@ def Restart():
     global foodPos
     global inGaming
     global dir
-
+    random.seed(12345)
     dir = "a"
     board = [[0 for x in range(11)] for y in range(11)]
     snake = Snake(5, 5)
